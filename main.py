@@ -8,8 +8,9 @@ import json
 
 ## External
 from aiogram import Bot, types
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardRemove, \
-                          ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, \
+                          InlineKeyboardButton, InlineKeyboardMarkup, \
+                          ReplyKeyboardRemove
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
@@ -78,10 +79,10 @@ async def send(user, text='', buttons=None, inline=False, image=None, preview=Fa
 			reply_markup=keyboard(buttons, inline),
 		)
 
-@dp.message_handler(commands=['start'])
-async def echo_1(message: types.Message):
+
+async def echo_1(user):
     await send(
-        message.chat.id,
+        user,
         """
 Друзья здравствуйте!
 Это наш бот, который расскажет о методе «Анкета Кристины Макаровой» ⛲
@@ -96,10 +97,9 @@ async def echo_1(message: types.Message):
         ),
     )
 
-@dp.message_handler(text="Узнать о Методе")
-async def echo_2(message: types.Message):
+async def echo_2(user):
     await send(
-        message.chat.id,
+        user,
         """
 Анкета не была создана или придумана мною. Она пришла ко мне в состоянии пробуждения безмолвными вопросами, которые были обращены к обеспокоеному рядом со мной человеку. Находясь в переживании безмолвной истины о том, что в реальности беспокоиться не о чем, меня так удивило - что он о чем-то переживал.
 
@@ -115,14 +115,14 @@ async def echo_2(message: types.Message):
 Ну что, готовы?
         """,
         (
-            "Интересно!",
+            {'name': "Интересно!", 'type': 'callback', 'data': 'c1'},
         ),
+        True,
     )
 
-@dp.message_handler(text="Разборы с Кристиной")
-async def echo_3(message: types.Message):
+async def echo_3(user):
     await send(
-        message.chat.id,
+        user,
         """
 Давайте начнем!"
 
@@ -149,14 +149,14 @@ async def echo_3(message: types.Message):
 Но если вы к этому открыты, Анкета для вас 🌳
         """,
         (
-            "Хочу практиковать!",
+            {'name': "Хочу практиковать!", 'type': 'callback', 'data': 'c2'},
         ),
+        True,
     )
 
-@dp.message_handler(text="Пройти Новую Терапию")
-async def echo_4(message: types.Message):
+async def echo_4(user):
     await send(
-        message.chat.id,
+        user,
         """
 Здорово!
 
@@ -173,14 +173,14 @@ async def echo_4(message: types.Message):
 Чтобы практиковать Анкету более углубленно и освободиться от своих травм и сценариев, приходите в Новую Терапию:
         """,
         (
-            "Начать Новую Терапию",
+            {'name': "Начать Новую Терапию", 'type': 'callback', 'data': 'c3'},
         ),
+        True,
     )
 
-@dp.message_handler(text="Мне все сразу")
-async def echo_4(message: types.Message):
+async def echo_5(user):
     await send(
-        message.chat.id,
+        user,
         """
 Мы часто не осознаем своих травм и не понимаем, почему у нас возникают определенные проблемы в развитии, в личности, во взаимоотношениях, в сексуальности или проявлении себя в мире.
 
@@ -202,14 +202,34 @@ async def echo_4(message: types.Message):
 акция доступна до 29 мая (боту нужно подставлять дату которая будет на 3 дня вперед)
         """,
         (
-            "Начать",
+            {'name': "Начать", 'type': 'callback', 'data': 'c4'},
         ),
+        True,
     )
+
+@dp.message_handler(commands=['start'])
+async def handler_start(message: types.Message):
+    await echo_1(message.chat.id)
+
+@dp.message_handler(text="Узнать о Методе")
+async def handler_more(message: types.Message):
+    await echo_2(message.chat.id)
+
+@dp.message_handler(text="Разборы с Кристиной")
+async def handler_analysis(message: types.Message):
+    await echo_3(message.chat.id)
+
+@dp.message_handler(text="Пройти Новую Терапию")
+async def handler_new(message: types.Message):
+    await echo_4(message.chat.id)
+
+@dp.message_handler(text="Мне все сразу")
+async def handler_all(message: types.Message):
+    await echo_5(message.chat.id)
 
 @dp.message_handler()
 async def echo(message: types.Message):
-    await send(message.chat.id, 'OK')
-
+    await echo_1(message.chat.id)
 
 async def on_start(x):
     """ Handler on the bot start """
