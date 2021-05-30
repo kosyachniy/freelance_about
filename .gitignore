@@ -1,0 +1,21 @@
+# Cache
+## MacOS
+.DS_Store
+
+## Editors
+.idea/
+.vscode/
+
+## Python
+__pycache__/
+*.pyc
+
+## Telegram
+*.session
+
+# Keys & sets
+keys*
+# .env*
+
+# Environments
+env/
