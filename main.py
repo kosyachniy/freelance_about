@@ -79,6 +79,10 @@ async def send(user, text='', buttons=None, inline=False, image=None, preview=Fa
 			reply_markup=keyboard(buttons, inline),
 		)
 
+async def send_file(user, name):
+	with open(name, 'rb') as file:
+		return await bot.send_document(user, file)
+
 
 async def echo_1(user):
     await send(
@@ -161,11 +165,29 @@ async def echo_4(user):
 Здорово!
 
 Чтобы начать работать по Анкете, послушайте эту аудиозапись, где я объясняю вопросы Анкеты и рассказываю о своей практике:
+        """,
+    )
 
-АУДИОФИАЙЛ (напиши емайл куда выслать аудиофайл для прикрепа?)
+    # await send_file(
+    #     user,
+    #     '',
+    # )
 
-Скачайте саму Анкету здесь (файл ниже в пдф)
+    await send(
+        user,
+        """
+Скачайте саму Анкету здесь:
+        """,
+    )
 
+    await send_file(
+        user,
+        'Анкета.pdf',
+    )
+
+    await send(
+        user,
+        """
 Посмотрите видео-работы здесь: https://www.youtube.com/channel/UCeTgZMycpmXmQnYHIjFB_PA (ссылку встроить в слово здесь)
 
 Приходите на встречи со мной, чтобы задать свой вопрос, я спонтанно провожу их на канале «это не от этого» https://t.me/anketakm
