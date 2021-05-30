@@ -8,7 +8,10 @@ import json
 
 ## External
 from aiogram import Bot, types
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardRemove, \
+                          ReplyKeyboardMarkup, KeyboardButton
 from aiogram.dispatcher import Dispatcher
+from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
 
 
@@ -31,6 +34,67 @@ dp = Dispatcher(bot)
 
 
 # Funcs
+def keyboard(rows, inline=False):
+	if rows == []:
+		if inline:
+			return InlineKeyboardMarkup()
+		else:
+			return ReplyKeyboardRemove()
+
+	if rows in (None, [], [[]]):
+		return rows
+
+	if inline:
+		buttons = InlineKeyboardMarkup()
+	else:
+		buttons = ReplyKeyboardMarkup(resize_keyboard=True)
+
+	if type(rows[0]) not in (list, tuple):
+		rows = [[button] for button in rows]
+
+	for cols in rows:
+		if inline:
+			buttons.add(*[InlineKeyboardButton(col['name'], **({'url': col['data']} if col['type'] == 'link' else {'callback_data': col['data']})) for col in cols])
+		else:
+			buttons.add(*[KeyboardButton(col) for col in cols])
+
+	return buttons
+
+## Send message
+async def send(user, text='', buttons=None, inline=False, image=None, preview=False):
+	if not image:
+		return await bot.send_message(
+			user,
+			text,
+			reply_markup=keyboard(buttons, inline),
+			disable_web_page_preview=not preview,
+		)
+
+	else:
+		return await bot.send_photo(
+			user,
+			image,
+			text,
+			reply_markup=keyboard(buttons, inline),
+		)
+
+@dp.message_handler(commands=['start'])
+async def process_start_command(message: types.Message):
+    # return SendMessage
+    await send(
+        message.chat.id,
+        """Друзья здравствуйте!"""
+        """\nЭто наш бот, который расскажет о методе «Анкета Кристины Макаровой» ⛲"""
+        """\n"""
+        """\nРасскажите, для чего вы здесь?""",
+        (
+            "Узнать о Методе",
+            "Разборы с Кристиной",
+            "Пройти Новую Терапию",
+            "Мне все сразу",
+        ),
+    )
+
 @dp.message_handler()
 async def echo(message: types.Message):
     """ Main handler """
