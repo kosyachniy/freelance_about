@@ -10,7 +10,7 @@ import json
 from aiogram import Bot, types
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, \
                           InlineKeyboardButton, InlineKeyboardMarkup, \
-                          ReplyKeyboardRemove
+                          ReplyKeyboardRemove, Message
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
@@ -202,33 +202,45 @@ async def echo_5(user):
 акция доступна до 29 мая (боту нужно подставлять дату которая будет на 3 дня вперед)
         """,
         (
-            {'name': "Начать", 'type': 'callback', 'data': 'c4'},
+            {'name': "Начать", 'type': 'link', 'data': 'https://my.8steps.live/newtherapy'},
         ),
         True,
     )
 
 @dp.message_handler(commands=['start'])
-async def handler_start(message: types.Message):
+async def handler_start(message: Message):
     await echo_1(message.chat.id)
 
 @dp.message_handler(text="Узнать о Методе")
-async def handler_more(message: types.Message):
+async def handler_more(message: Message):
     await echo_2(message.chat.id)
 
 @dp.message_handler(text="Разборы с Кристиной")
-async def handler_analysis(message: types.Message):
+async def handler_analysis(message: Message):
     await echo_3(message.chat.id)
 
 @dp.message_handler(text="Пройти Новую Терапию")
-async def handler_new(message: types.Message):
+async def handler_new(message: Message):
     await echo_4(message.chat.id)
 
 @dp.message_handler(text="Мне все сразу")
-async def handler_all(message: types.Message):
+async def handler_all(message: Message):
     await echo_5(message.chat.id)
 
+@dp.callback_query_handler(lambda message: message.data == 'c1')
+async def handler_c1(callback):
+    await echo_3(callback.message.chat.id)
+
+@dp.callback_query_handler(lambda message: message.data == 'c2')
+async def handler_c1(callback):
+    await echo_4(callback.message.chat.id)
+
+@dp.callback_query_handler(lambda message: message.data == 'c3')
+async def handler_c1(callback):
+    await echo_5(callback.message.chat.id)
+
 @dp.message_handler()
-async def echo(message: types.Message):
+async def echo(message: Message):
     await echo_1(message.chat.id)
 
 async def on_start(x):
