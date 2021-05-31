@@ -5,6 +5,7 @@ Telegram bot
 # Libraries
 ## System
 import json
+import datetime
 
 ## External
 from aiogram import Bot, types
@@ -62,12 +63,13 @@ def keyboard(rows, inline=False):
 	return buttons
 
 ## Send message
-async def send(user, text='', buttons=None, inline=False, image=None, preview=False):
+async def send(user, text='', buttons=None, inline=False, image=None, preview=False, markup=None):
 	if not image:
 		return await bot.send_message(
 			user,
 			text,
 			reply_markup=keyboard(buttons, inline),
+			parse_mode=markup,
 			disable_web_page_preview=not preview,
 		)
 
@@ -77,6 +79,7 @@ async def send(user, text='', buttons=None, inline=False, image=None, preview=Fa
 			image,
 			text,
 			reply_markup=keyboard(buttons, inline),
+			parse_mode=markup,
 		)
 
 async def send_file(user, name):
@@ -128,9 +131,9 @@ async def echo_3(user):
     await send(
         user,
         """
-Давайте начнем!"
+Давайте начнем!
 
-Что такое «Анкета»?"
+Что такое «Анкета»?
 
 Анкета - это вопросы, которые бы задал вам просветлённый человек, у которого нет тревог, который понимает истину. Особенность Анкеты в том, что она работает не с убеждениями, а с тем, что их создаёт.
 
@@ -166,12 +169,18 @@ async def echo_4(user):
 
 Чтобы начать работать по Анкете, послушайте эту аудиозапись, где я объясняю вопросы Анкеты и рассказываю о своей практике:
         """,
+        (
+            "Мне все сразу",
+            "Узнать о Методе",
+            "Разборы с Кристиной",
+            "Пройти Новую Терапию",
+        ),
     )
 
-    # await send_file(
-    #     user,
-    #     '',
-    # )
+    await send_file(
+        user,
+        'Голосовое.mp3',
+    )
 
     await send(
         user,
@@ -188,7 +197,7 @@ async def echo_4(user):
     await send(
         user,
         """
-Посмотрите видео-работы здесь: https://www.youtube.com/channel/UCeTgZMycpmXmQnYHIjFB_PA (ссылку встроить в слово здесь)
+Посмотрите видео-работы [здесь](https://www.youtube.com/channel/UCeTgZMycpmXmQnYHIjFB_PA)
 
 Приходите на встречи со мной, чтобы задать свой вопрос, я спонтанно провожу их на канале «это не от этого» https://t.me/anketakm
 
@@ -198,12 +207,21 @@ async def echo_4(user):
             {'name': "Начать Новую Терапию", 'type': 'callback', 'data': 'c3'},
         ),
         True,
+        markup='Markdown',
     )
 
 async def echo_5(user):
+    MONTHS = (
+        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+    )
+
+    date = datetime.datetime.now() + datetime.timedelta(days=3)
+    date_text = f"{date.day} {MONTHS[date.month-1]}"
+
     await send(
         user,
-        """
+        f"""
 Мы часто не осознаем своих травм и не понимаем, почему у нас возникают определенные проблемы в развитии, в личности, во взаимоотношениях, в сексуальности или проявлении себя в мире.
 
 Программа «Новая Терапия» помогает увидеть все свои подавленности и с помощью группы практиков и партнера по работе экологично освобождаться от них параллельно со своей жизнью.
@@ -213,15 +231,16 @@ async def echo_5(user):
 Это лучшая программа по самопониманию, которую проходят участники из разных стран. Мы сделали доступной стоимость этой терапии - от 3000 рублей в месяц.
 
 В программу входит:
-Обучающая программа по Анкете
-4 эфира с Кристиной в месяц
-4 встречи с персональной командой
-Работы в тандеме
-Доступ в сообщество практиков
+• Обучающая программа по Анкете
+• 4 эфира с Кристиной в месяц
+• 4 встречи с персональной командой
+• Работы в тандеме
+• Доступ в сообщество практиков
 
 Вступайте в программу сейчас и получите бесплатную сессию с консультантом Анкеты!
-ссылка
-акция доступна до 29 мая (боту нужно подставлять дату которая будет на 3 дня вперед)
+https://my.8steps.live/newtherapy
+
+акция доступна до {date_text}
         """,
         (
             {'name': "Начать", 'type': 'link', 'data': 'https://my.8steps.live/newtherapy'},
