@@ -6,6 +6,7 @@ Telegram bot
 ## System
 import json
 import datetime
+from collections import defaultdict
 
 ## External
 from aiogram import Bot, types
@@ -255,12 +256,30 @@ https://my.8steps.live/newtherapy
         True,
     )
 
-async def echo_stat(user):
+async def echo_stat(to_user):
+    text = "Переходы по источникам:\n"
+
+    users = list(db['users'].find({}, {'_id': False, 'source': True}))
+    count = len(users)
+
+    if not count:
+        return
+
+    sources = defaultdict(int)
+    for user in users:
+        sources[user['source']] += 1
+
+    for source in sources:
+        if source:
+            source_name = source
+        else:
+            source_name = 'Пришли сами'
+
+        text += f"\n{source_name}: {sources[source]} чел. ({round(sources[source]*100/count, 1)}%)"
+
     await send(
-        user,
-        """
-Стата
-        """,
+        to_user,
+        text,
         (
             "Узнать о Методе",
             "Разборы с Кристиной",
@@ -276,12 +295,15 @@ async def handler_start(message: Message):
     except:
         source = None
 
-    db['users'].insert_one({
-        'id': message.chat.id,
-        'login': message.chat.username,
-        'source': source,
-        'created': datetime.datetime.now(),
-    })
+    user = db['users'].find_one({'id': message.chat.id}, {'_id': True})
+
+    if not user:
+        db['users'].insert_one({
+            'id': message.chat.id,
+            'login': message.chat.username,
+            'source': source,
+            'created': datetime.datetime.now(),
+        })
 
     await echo_1(message.chat.id)
 
