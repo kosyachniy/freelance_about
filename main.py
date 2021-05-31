@@ -257,6 +257,9 @@ https://my.8steps.live/newtherapy
     )
 
 async def echo_stat(to_user):
+    if message.chat.id not in ADMINS:
+        return
+
     text = "Переходы по источникам:\n"
 
     users = list(db['users'].find({}, {'_id': False, 'source': True}))
@@ -295,12 +298,12 @@ async def handler_start(message: Message):
     except:
         source = None
 
-    user = db['users'].find_one({'id': message.chat.id}, {'_id': True})
+    user = db['users'].find_one({'id': message.from_user.id}, {'_id': True})
 
     if not user:
         db['users'].insert_one({
-            'id': message.chat.id,
-            'login': message.chat.username,
+            'id': message.from_user.id,
+            'login': message.from_user.username,
             'source': source,
             'created': datetime.datetime.now(),
         })
@@ -341,7 +344,27 @@ async def handler_c1(callback):
 
 @dp.message_handler()
 async def echo(message: Message):
-    await echo_1(message.chat.id)
+    if message.chat.id in ADMINS:
+        db_condition = {'id': {'$ne': message.chat.id}}
+        db_filter = {'_id': False, 'id': True}
+        for user in db['users'].find(db_condition, db_filter):
+            await send(user['id'], message.text)
+
+        await send(message.chat.id, "Отправлено всем!")
+
+    else:
+        text = f"Сообщение от {message.from_user.first_name} {message.from_user.last_name}"
+        if message.chat.username:
+            text += f" (@{message.from_user.username})"
+        text += ":\n\n" + message.text
+
+        for user in ADMINS:
+            try:
+               await send(user, text)
+            except:
+                pass
+
+        await send(message.chat.id, "Ваш отзыв отправлен!")
 
 async def on_start(x):
     """ Handler on the bot start """
