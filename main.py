@@ -16,11 +16,15 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
 
+## Local
+from mongodb import db
+
 
 # Params
 with open('sets.json', 'r') as file:
     sets = json.loads(file.read())
     WEBHOOK_URL = sets['tg']['server']
+    ADMINS = sets['admins']
 
 with open('keys.json', 'r') as file:
     keys = json.loads(file.read())
@@ -36,7 +40,7 @@ dp = Dispatcher(bot)
 
 
 # Funcs
-def keyboard(rows, inline=False):
+def keyboard(user, rows, inline=False):
 	if rows == []:
 		if inline:
 			return InlineKeyboardMarkup()
@@ -45,6 +49,9 @@ def keyboard(rows, inline=False):
 
 	if rows in (None, [], [[]]):
 		return rows
+
+	if not inline and user in ADMINS:
+		rows = list(rows) + ['Статистика']
 
 	if inline:
 		buttons = InlineKeyboardMarkup()
@@ -68,7 +75,7 @@ async def send(user, text='', buttons=None, inline=False, image=None, preview=Fa
 		return await bot.send_message(
 			user,
 			text,
-			reply_markup=keyboard(buttons, inline),
+			reply_markup=keyboard(user, buttons, inline),
 			parse_mode=markup,
 			disable_web_page_preview=not preview,
 		)
@@ -78,7 +85,7 @@ async def send(user, text='', buttons=None, inline=False, image=None, preview=Fa
 			user,
 			image,
 			text,
-			reply_markup=keyboard(buttons, inline),
+			reply_markup=keyboard(user, buttons, inline),
 			parse_mode=markup,
 		)
 
@@ -248,8 +255,34 @@ https://my.8steps.live/newtherapy
         True,
     )
 
+async def echo_stat(user):
+    await send(
+        user,
+        """
+Стата
+        """,
+        (
+            "Узнать о Методе",
+            "Разборы с Кристиной",
+            "Пройти Новую Терапию",
+            "Мне все сразу",
+        ),
+    )
+
 @dp.message_handler(commands=['start'])
 async def handler_start(message: Message):
+    try:
+        source = message.text.split()[1]
+    except:
+        source = None
+
+    db['users'].insert_one({
+        'id': message.chat.id,
+        'login': message.chat.username,
+        'source': source,
+        'created': datetime.datetime.now(),
+    })
+
     await echo_1(message.chat.id)
 
 @dp.message_handler(text="Узнать о Методе")
@@ -267,6 +300,10 @@ async def handler_new(message: Message):
 @dp.message_handler(text="Мне все сразу")
 async def handler_all(message: Message):
     await echo_5(message.chat.id)
+
+@dp.message_handler(text="Статистика")
+async def handler_stat(message: Message):
+    await echo_stat(message.chat.id)
 
 @dp.callback_query_handler(lambda message: message.data == 'c1')
 async def handler_c1(callback):
