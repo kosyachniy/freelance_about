@@ -274,10 +274,9 @@ async def echo_stat(to_user):
     if to_user not in ADMINS:
         return
 
-    text = "Переходы по источникам:\n"
-
     users = list(db['users'].find({}, {'_id': False, 'source': True}))
     count = len(users)
+    text = f"Всего: {count}\n\nПереходы по источникам:\n"
 
     if not count:
         return
@@ -293,6 +292,19 @@ async def echo_stat(to_user):
             source_name = 'Пришли сами'
 
         text += f"\n{source_name}: {sources[source]} чел. ({round(sources[source]*100/count, 1)}%)"
+
+    # Buttons stat
+
+    c1 = len(set(db.sys.find_one({'name': 'c1'}, {'_id': False, 'cont': True})['cont']))
+    c2 = len(set(db.sys.find_one({'name': 'c2'}, {'_id': False, 'cont': True})['cont']))
+    c3 = len(set(db.sys.find_one({'name': 'c3'}, {'_id': False, 'cont': True})['cont']))
+
+    text += f"\n\nПереходы по кнопкам:\n" \
+            f"\nИнтересно! — {c1}" \
+            f"\nХочу практиковать! — {c2}" \
+            f"\nНачать Новую Терапию — {c3}"
+
+    #
 
     await send(
         to_user,
@@ -341,15 +353,21 @@ async def handler_stat(message: Message):
 
 @dp.callback_query_handler(lambda message: message.data == 'c1')
 async def handler_c1(callback):
-    await echo_3(callback.message.chat.id)
+    user_id = callback.message.chat.id
+    db.sys.update_one({'name': 'c1'}, {'$push': {'cont': user_id}})
+    await echo_3(user_id)
 
 @dp.callback_query_handler(lambda message: message.data == 'c2')
 async def handler_c1(callback):
-    await echo_4(callback.message.chat.id)
+    user_id = callback.message.chat.id
+    db.sys.update_one({'name': 'c2'}, {'$push': {'cont': user_id}})
+    await echo_4(user_id)
 
 @dp.callback_query_handler(lambda message: message.data == 'c3')
 async def handler_c1(callback):
-    await echo_5(callback.message.chat.id)
+    user_id = callback.message.chat.id
+    db.sys.update_one({'name': 'c3'}, {'$push': {'cont': user_id}})
+    await echo_5(user_id)
 
 @dp.message_handler()
 async def echo(message: Message):
