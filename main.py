@@ -4,9 +4,12 @@ Telegram bot
 
 # Libraries
 ## System
+import time
 import json
 import datetime
 from collections import defaultdict
+from multiprocessing import Process
+import asyncio
 
 ## External
 from aiogram import Bot, types
@@ -26,6 +29,8 @@ with open('sets.json', 'r') as file:
     sets = json.loads(file.read())
     WEBHOOK_URL = sets['tg']['server']
     ADMINS = sets['admins']
+    TIMEZONE = sets['timezone']
+    MAILING_HOUR = sets['mailing']
 
 with open('keys.json', 'r') as file:
     keys = json.loads(file.read())
@@ -412,8 +417,59 @@ async def on_start(x):
 #     await dp.storage.close()
 #     await dp.storage.wait_closed()
 
+async def send_notifications():
+    current_time = datetime.datetime.now()
+    if current_time.hour == MAILING_HOUR - TIMEZONE:
+        stop_time = datetime.datetime(
+            current_time.year,
+            current_time.month,
+            current_time.day,
+        ) - datetime.timedelta(days=2)
+
+        db_condition = {
+            'created': {'$lte': stop_time},
+            'informed': {'$exists': False},
+        }
+
+        db_filter = {
+            '_id': False,
+            'id': True,
+        }
+
+        for user in db['users'].find(db_condition, db_filter):
+            try:
+                await send(
+                    user['id'],
+                    """
+Друзья, привет! Сегодня последний день, когда вы можете получить сессию-разбор в подарок, присоединившись к программе «Новая терапия» 🦋
+
+Регистрирурйтесь: my.8steps.live/newtherapy
+                    """,
+                    (
+                        "Узнать о Методе",
+                        "Разборы с Кристиной",
+                        "Пройти Новую Терапию",
+                    ),
+                )
+            except:
+                print(f"ERROR `send` for {user['id']}")
+
+        db['users'].update_many(db_condition, {'$set': {'informed': True}})
+
+    time.sleep(600) # Every 10 minutes
+
+
+def main():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(send_notifications())
+    loop.close()
 
 if __name__ == '__main__':
+    process_notifications = Process(target=main)
+    process_notifications.start()
+
     start_webhook(
         dispatcher=dp,
         webhook_path='',
